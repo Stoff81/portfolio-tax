@@ -20,26 +20,26 @@ The application allows users to visualize and compare:
   - Tax calculated only on net portfolio value changes
   - Tax applied on deposits (inputs) and withdrawals (outputs)
   - No tax on intermediate transactions
-  - Should show owed tax at current portfolio balance
+  - Tax Owed value calculated as if the entire portfolio was sold and withdrawn at that point in time
 
 ### 2. Portfolio Trading Scenarios (3 Scenarios)
 Each scenario simulates the same portfolio with different transaction patterns:
 Any trade will always be against the USD pair.
 
-- **Scenario 1: Active Trading**
-  - Multiple buy/sell transactions
-  - Frequent rebalancing
-  - High transaction volume
+- **Scenario 1: Bad Trader**
+  - Makes losing trades most of the time
+  - Poor timing on buy/sell decisions
+  - Loses value on most transactions
 
-- **Scenario 2: Moderate Trading**
-  - Periodic transactions
-  - Strategic rebalancing
-  - Moderate transaction volume
+- **Scenario 2: Good Trader**
+  - Makes profitable trades most of the time
+  - Good timing on buy/sell decisions
+  - Gains value on most transactions
 
 - **Scenario 3: Buy and Hold**
-  - Minimal transactions
+  - Minimal to no trading
   - Long-term holding strategy
-  - Low transaction volume
+  - Portfolio value changes only with asset price movements
 
 ### 3. Asset Configuration
 - **Three Separate Assets** with simulated prices:
@@ -136,8 +136,11 @@ Scenario {
 ```
 For each transaction:
   - Calculate capital gain/loss: (sellPrice - buyPrice) * quantity
-  - Apply tax rate to gain
-  - Accumulate total tax
+  - Track cumulative net gains/losses
+  - Losses offset gains (tax write-offs)
+  - Apply tax rate to net gains (after losses are offset)
+  - If net is negative (more losses than gains), tax is negative (tax write-off/credit)
+  - Negative tax values are allowed and represent tax credits that can offset other taxes
 ```
 
 #### Portfolio-Level Tax
@@ -147,6 +150,10 @@ For portfolio inputs/outputs:
   - Calculate portfolio value change
   - Apply tax only on net cash flow
   - No tax on intermediate transactions
+  - Tax is calculated as if entire portfolio was sold at current value
+  - Tax = (Current Portfolio Value - Initial Investment) * Tax Rate
+  - If portfolio value is less than initial investment, tax is negative (tax write-off/credit)
+  - Negative tax values are allowed and represent tax credits that can offset other taxes
 ```
 
 ## User Flow
@@ -184,6 +191,8 @@ For portfolio inputs/outputs:
 - Bar charts for tax comparison
 - Transaction timeline visualization
 - Asset price charts
+- Y-axis scaling: For large numbers, scale by 1/1000 (show in thousands) without decimals
+- Portfolio value graph shows monthly data points even when there are no trades (for buy and hold scenarios)
 
 ## Future Enhancements (Out of Scope for MVP)
 - Custom transaction input
