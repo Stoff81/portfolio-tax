@@ -23,7 +23,9 @@ const AssetPanel = ({ priceHistory, assets }) => {
     
     Object.keys(priceHistory).forEach(assetId => {
       const price = priceHistory[assetId][i]?.price || priceHistory[assetId][priceHistory[assetId].length - 1]?.price || 0;
-      dataPoint[assetId] = Number(price.toFixed(2));
+      // Ensure price is positive for logarithmic scale (log scale requires values > 0)
+      // Use actual price if > 0, otherwise use a small positive value
+      dataPoint[assetId] = price > 0 ? Number(price.toFixed(2)) : 0.01;
     });
     
     chartData.push(dataPoint);
@@ -50,6 +52,22 @@ const AssetPanel = ({ priceHistory, assets }) => {
     return `$${value.toFixed(0)}`;
   };
 
+  // Calculate min and max prices for log scale domain
+  let minPrice = Infinity;
+  let maxPrice = -Infinity;
+  chartData.forEach(point => {
+    Object.keys(priceHistory).forEach(assetId => {
+      const price = point[assetId];
+      if (price > 0) {
+        minPrice = Math.min(minPrice, price);
+        maxPrice = Math.max(maxPrice, price);
+      }
+    });
+  });
+  
+  // Set domain for log scale (ensure min is > 0)
+  const logDomain = [Math.max(0.01, minPrice * 0.9), maxPrice * 1.1];
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Asset Prices</h2>
@@ -75,7 +93,12 @@ const AssetPanel = ({ priceHistory, assets }) => {
             textAnchor="end"
             height={80}
           />
-          <YAxis tickFormatter={formatYAxis} />
+          <YAxis 
+            tickFormatter={formatYAxis}
+            scale="log"
+            type="number"
+            domain={logDomain}
+          />
           <Tooltip 
             formatter={(value) => formatPrice(value)}
             labelFormatter={(label) => formatDate(label)}

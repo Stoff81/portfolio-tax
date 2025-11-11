@@ -66,7 +66,7 @@ const ScenarioView = ({ scenarioData }) => {
               </div>
             </div>
             <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Tax Savings</div>
+              <div className="text-sm text-gray-600">Tax Difference</div>
               <div className="text-2xl font-bold text-yellow-700">
                 {formatCurrency(Math.abs(transactionTax.totalTax - portfolioTax.totalTax))}
               </div>

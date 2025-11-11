@@ -1,12 +1,18 @@
 // Generate simulated price data for assets
-export const generatePriceHistory = (assetId, days, basePrice, volatility) => {
+export const generatePriceHistory = (assetId, days, basePrice, volatility, trend = 0) => {
   const prices = [];
   let currentPrice = basePrice;
   
+  // Trend: positive value means upward trend (appreciation), negative means downward
+  // Default is 0 (no trend, just random walk)
+  // For BTC, we'll add a positive trend to make it more profitable
+  const dailyTrend = trend / days; // Convert annual trend to daily
+  
   for (let i = 0; i < days; i++) {
-    // Random walk with some volatility
-    const change = (Math.random() - 0.5) * volatility * currentPrice;
-    currentPrice = Math.max(currentPrice + change, basePrice * 0.5); // Don't go below 50% of base
+    // Random walk with volatility and optional trend
+    const randomChange = (Math.random() - 0.5) * volatility * currentPrice;
+    const trendChange = dailyTrend * currentPrice;
+    currentPrice = Math.max(currentPrice + randomChange + trendChange, basePrice * 0.5); // Don't go below 50% of base
     prices.push({
       date: new Date(2024, 0, 1 + i),
       price: Number(currentPrice.toFixed(2))
@@ -282,19 +288,22 @@ export const initializeAssets = (days = 365) => {
       id: 'BTC',
       name: 'Bitcoin',
       basePrice: 45000,
-      volatility: 0.03
+      volatility: 0.03,
+      trend: 0.30 // 30% annual appreciation for BTC (makes good trader more profitable)
     },
     ETH: {
       id: 'ETH',
       name: 'Ethereum',
       basePrice: 2500,
-      volatility: 0.04
+      volatility: 0.05,
+      trend: 0.40 // 40% annual appreciation for ETH
     },
     DOGE: {
       id: 'DOGE',
       name: 'Dogecoin',
       basePrice: 0.08,
-      volatility: 0.05
+      volatility: 0.08,
+      trend: 0.50 // 50% annual appreciation for DOGE
     }
   };
   
@@ -304,7 +313,8 @@ export const initializeAssets = (days = 365) => {
       assetId,
       days,
       assets[assetId].basePrice,
-      assets[assetId].volatility
+      assets[assetId].volatility,
+      assets[assetId].trend
     );
   });
   
