@@ -104,5 +104,5 @@ src/
 - Add historical price data integration
 - Implement advanced tax rules (wash sales, long-term vs short-term)
 - Add export to PDF functionality
-- Add user account/save scenarios
+- Add user account/save scenarios.
 
