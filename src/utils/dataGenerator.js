@@ -1,12 +1,13 @@
 // Generate simulated price data for assets
+// Trend is normalized to annual (yearly) rate, regardless of timeframe
 export const generatePriceHistory = (assetId, days, basePrice, volatility, trend = 0) => {
   const prices = [];
   let currentPrice = basePrice;
   
   // Trend: positive value means upward trend (appreciation), negative means downward
   // Default is 0 (no trend, just random walk)
-  // For BTC, we'll add a positive trend to make it more profitable
-  const dailyTrend = trend / days; // Convert annual trend to daily
+  // Trend is annual (yearly) rate - normalize to daily regardless of total days
+  const dailyTrend = trend / 365; // Always convert annual trend to daily (normalized to year)
   
   for (let i = 0; i < days; i++) {
     // Random walk with volatility and optional trend

@@ -6,7 +6,7 @@ import ScenarioView from './ScenarioView';
 const Dashboard = () => {
   const [config, setConfig] = useState({
     initialValue: 100000,
-    days: 1095,
+    years: 3,
     taxRate: 0.39
   });
   
@@ -23,7 +23,10 @@ const Dashboard = () => {
     // Simulate async operation
     setTimeout(() => {
       try {
-        const data = simulatePortfolio(config);
+        const data = simulatePortfolio({
+          ...config,
+          days: Math.round(config.years * 365)
+        });
         // Add config to each scenario for reference
         data.scenarios.forEach(scenario => {
           scenario.config = config;
@@ -92,16 +95,16 @@ const Dashboard = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Time Period (Days)
+                Time Period (Years)
               </label>
               <input
                 type="number"
-                value={config.days}
-                onChange={(e) => handleConfigChange('days', e.target.value)}
+                value={config.years}
+                onChange={(e) => handleConfigChange('years', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                min="30"
-                max="1095"
-                step="30"
+                min="0.25"
+                max="10"
+                step="0.25"
               />
             </div>
             <div>
