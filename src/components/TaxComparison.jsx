@@ -53,20 +53,6 @@ const TaxComparison = ({ scenarioData }) => {
 
   return (
     <div className="space-y-6 mb-6">
-      {/* Tax Comparison Bar Chart */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Total Tax Comparison</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={comparisonData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={formatYAxis} />
-            <Tooltip formatter={(value) => formatCurrency(value)} />
-            <Bar dataKey="tax" fill="#8884d8" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
       {/* Portfolio Value Over Time */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-6">
         <h3 className="text-xl font-bold mb-4 text-gray-800">Portfolio Value Over Time</h3>
@@ -86,7 +72,7 @@ const TaxComparison = ({ scenarioData }) => {
             <Line 
               type="monotone" 
               dataKey="portfolioValueTransaction" 
-              stroke="#ef4444" 
+              stroke="#7F02E4"
               strokeWidth={2}
               name="Transaction-Based Portfolio Value"
               dot={false}
@@ -122,7 +108,7 @@ const TaxComparison = ({ scenarioData }) => {
             <Line 
               type="monotone" 
               dataKey="transactionTax" 
-              stroke="#ef4444" 
+              stroke="#7F02E4" 
               strokeWidth={2}
               name="Transaction Tax (Paid)"
               dot={false}

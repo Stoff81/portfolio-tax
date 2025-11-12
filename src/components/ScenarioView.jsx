@@ -46,29 +46,42 @@ const ScenarioView = ({ scenarioData }) => {
       {activeTab === 'overview' && (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Current Portfolio Value</div>
-              <div className="text-2xl font-bold text-green-700">
-                {formatCurrency(currentPortfolioValue)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Transaction-Based Strategy Column */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Transaction-Based Strategy</h3>
+              <div className="space-y-4">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm text-gray-600">Current Portfolio Value</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {formatCurrency(currentPortfolioValue)}
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm text-gray-600">Tax Paid</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {formatCurrency(transactionTax.totalTax)}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Transaction Tax</div>
-              <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(transactionTax.totalTax)}
-              </div>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Portfolio Tax</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(portfolioTax.totalTax)}
-              </div>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Tax Difference</div>
-              <div className="text-2xl font-bold text-yellow-700">
-                {formatCurrency(Math.abs(transactionTax.totalTax - portfolioTax.totalTax))}
+            
+            {/* Portfolio-Level Strategy Column */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Portfolio-Level Strategy</h3>
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm text-gray-600">Current Portfolio Value</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(portfolioTax.currentPortfolioValue)}
+                  </div>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm text-gray-600">Tax Owed</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(portfolioTax.totalTax)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
