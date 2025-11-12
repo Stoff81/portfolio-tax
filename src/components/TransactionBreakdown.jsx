@@ -95,17 +95,11 @@ const TransactionBreakdown = ({ scenarioData }) => {
       }
     } else {
       // Portfolio-level tax: calculate as if entire portfolio was sold at this point
-      // Calculate total cost basis
-      let totalCostBasis = costBasisHoldings.USD;
-      ['BTC', 'ETH', 'DOGE'].forEach(assetId => {
-        costBasisHoldings[assetId].forEach(holding => {
-          totalCostBasis += holding.quantity * holding.costBasis;
-        });
-      });
-      
-      // Current value is runningPortfolioValue
-      const capitalGains = runningPortfolioValue - totalCostBasis;
-      portfolioTaxOwed = Math.max(0, capitalGains * taxRate);
+      // Tax = (Current Portfolio Value - Initial Investment) * Tax Rate
+      // This matches the calculatePortfolioTax logic
+      const initialValue = scenarioData.config?.initialValue || 100000;
+      const profit = runningPortfolioValue - initialValue;
+      portfolioTaxOwed = profit * taxRate; // Allow negative values (tax write-offs)
     }
 
     transactionList.push({

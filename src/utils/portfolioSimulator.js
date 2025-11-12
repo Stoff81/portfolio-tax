@@ -60,13 +60,21 @@ export const simulatePortfolio = (config) => {
     
     // Calculate cumulative tax over time for transaction-based
     // Map tax to portfolio timeline dates
+    // This should match exactly what's shown in the transaction breakdown table
     const cumulativeTaxTimeline = portfolioTimeline.map(point => {
-      // Find all transactions up to this point
-      const transactionsUpToPoint = transactions.filter(tx => 
-        tx.timestamp <= point.date
-      );
+      // Find all transactions up to this point (including transactions on the same day)
+      // Normalize dates to midnight for comparison
+      const pointDate = new Date(point.date);
+      pointDate.setHours(0, 0, 0, 0);
       
-      // Calculate cumulative tax up to this point
+      const transactionsUpToPoint = transactions.filter(tx => {
+        const txDate = new Date(tx.timestamp);
+        txDate.setHours(0, 0, 0, 0);
+        return txDate <= pointDate;
+      });
+      
+      // Calculate cumulative tax up to this point - same logic as table
+      // Iterate in transaction order and sum tax events for sell transactions
       let runningTax = 0;
       transactionsUpToPoint.forEach(tx => {
         if (tx.type === 'sell') {
@@ -85,48 +93,21 @@ export const simulatePortfolio = (config) => {
     
     // Calculate portfolio-level tax over time (owed tax at each point)
     // Tax is calculated as if entire portfolio was sold at that point
+    // Use portfolio-level timeline (without tax deducted) to match table calculation
     const portfolioTaxTimeline = portfolioTimeline.map((point, index) => {
-      // Calculate cost basis and current value at this point
-      const day = Math.floor((point.date - new Date(2024, 0, 1)) / (1000 * 60 * 60 * 24));
+      // Find matching portfolio-level point by date (without tax deducted)
+      const portfolioLevelPoint = portfolioTimelinePortfolioLevel.find(
+        p => p.date.getTime() === point.date.getTime()
+      );
       
-      // Rebuild holdings up to this point
-      const pointHoldings = {
-        USD: initialValue,
-        BTC: [],
-        ETH: [],
-        DOGE: []
-      };
-      
-      const transactionsUpToPoint = transactions.filter(tx => tx.timestamp <= point.date);
-      
-      transactionsUpToPoint.forEach(tx => {
-        if (tx.type === 'buy') {
-          const cost = tx.quantity * tx.price;
-          pointHoldings.USD -= cost;
-          pointHoldings[tx.assetId].push({
-            quantity: tx.quantity,
-            costBasis: tx.price
-          });
-        } else if (tx.type === 'sell') {
-          let remainingQty = tx.quantity;
-          while (remainingQty > 0 && pointHoldings[tx.assetId].length > 0) {
-            const holding = pointHoldings[tx.assetId][0];
-            const qtyToSell = Math.min(remainingQty, holding.quantity);
-            remainingQty -= qtyToSell;
-            holding.quantity -= qtyToSell;
-            if (holding.quantity <= 0) {
-              pointHoldings[tx.assetId].shift();
-            }
-          }
-          const revenue = tx.quantity * tx.price;
-          pointHoldings.USD += revenue;
-        }
-      });
+      // Use portfolio value without tax deducted (matches table calculation)
+      const portfolioValue = portfolioLevelPoint?.value || point.value;
       
       // Portfolio-level tax: Calculate as profit from initial investment
       // Tax = (Current Portfolio Value - Initial Investment) * Tax Rate
       // Negative tax is allowed (represents tax write-off/credit when portfolio is at a loss)
-      const profit = point.value - initialValue;
+      // This matches the TransactionBreakdown table calculation exactly
+      const profit = portfolioValue - initialValue;
       const owedTax = profit * taxRate;
       
       return {
