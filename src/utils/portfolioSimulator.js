@@ -34,12 +34,29 @@ export const simulatePortfolio = (config) => {
     const portfolioTax = calculatePortfolioTax(transactions, initialValue, priceHistory, taxRate);
     
     // Calculate portfolio value over time
-    const portfolioTimeline = calculatePortfolioValueOverTime(
+    // For transaction-based tax, we need to calculate two timelines:
+    // 1. With tax deducted (transaction-based)
+    // 2. Without tax deducted (portfolio-level, for comparison)
+    const portfolioTimelineTransaction = calculatePortfolioValueOverTime(
       transactions,
       initialValue,
       priceHistory,
-      days
+      days,
+      taxRate,
+      'transaction'
     );
+    const portfolioTimelinePortfolio = calculatePortfolioValueOverTime(
+      transactions,
+      initialValue,
+      priceHistory,
+      days,
+      taxRate,
+      'portfolio'
+    );
+    
+    // Return both timelines - transaction-based (with tax deducted) and portfolio-level (without tax deducted)
+    const portfolioTimeline = portfolioTimelineTransaction;
+    const portfolioTimelinePortfolioLevel = portfolioTimelinePortfolio;
     
     // Calculate cumulative tax over time for transaction-based
     // Map tax to portfolio timeline dates
@@ -125,6 +142,7 @@ export const simulatePortfolio = (config) => {
       transactionTax,
       portfolioTax,
       portfolioTimeline,
+      portfolioTimelinePortfolioLevel,
       cumulativeTaxTimeline,
       portfolioTaxTimeline,
       priceHistory

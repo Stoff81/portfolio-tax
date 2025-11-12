@@ -169,7 +169,7 @@ const TransactionBreakdown = ({ scenarioData }) => {
                 Portfolio Value
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tax {selectedStrategy === 'transaction' ? 'Paid' : 'Owed'}
+                {selectedStrategy === 'transaction' ? 'Tax Paid' : '—'}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {selectedStrategy === 'transaction' ? 'Cumulative Tax' : 'Tax Owed'}
@@ -209,7 +209,7 @@ const TransactionBreakdown = ({ scenarioData }) => {
                   {selectedStrategy === 'transaction' ? (
                     formatCurrency(tx.taxForThisTx)
                   ) : (
-                    formatCurrency(tx.portfolioTaxOwed)
+                    '—'
                   )}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${

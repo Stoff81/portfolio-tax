@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateTransactionTax, calculatePortfolioTax } from '../../src/utils/taxCalculations.js';
+import { calculateTransactionTax, calculatePortfolioTax, calculatePortfolioValueOverTime } from '../../src/utils/taxCalculations.js';
 
 describe('Tax Calculations', () => {
   describe('Transaction-Based Tax', () => {
@@ -328,6 +328,199 @@ describe('Tax Calculations', () => {
       expect(result.taxEvents).toHaveLength(1);
       expect(result.taxEvents[0].gain).toBeCloseTo(-5000, 2);
       expect(result.taxEvents[0].tax).toBeCloseTo(-1000, 2);
+    });
+  });
+
+  describe('Portfolio Value with Transaction-Based Tax', () => {
+    it('should deduct tax from portfolio value when tax is paid', () => {
+      const transactions = [
+        {
+          id: 'tx-1',
+          type: 'buy',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 2500,
+          timestamp: new Date(2024, 0, 1)
+        },
+        {
+          id: 'tx-2',
+          type: 'sell',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 3000, // Gain of 5000
+          timestamp: new Date(2024, 0, 2)
+        }
+      ];
+
+      const initialValue = 100000;
+      const taxRate = 0.20;
+      const priceHistory = {
+        ETH: [
+          { date: new Date(2024, 0, 1), price: 2500 },
+          { date: new Date(2024, 0, 2), price: 3000 }
+        ]
+      };
+
+      // Calculate portfolio value with transaction-based tax
+      const timeline = calculatePortfolioValueOverTime(
+        transactions,
+        initialValue,
+        priceHistory,
+        365,
+        taxRate,
+        'transaction'
+      );
+
+      // After buy: USD = 100000 - (10 * 2500) = 75000, ETH = 10
+      // After sell: USD = 75000 + (10 * 3000) = 105000, ETH = 0
+      // Tax on gain of 5000: 5000 * 0.20 = 1000
+      // Final USD after tax: 105000 - 1000 = 104000
+      // Portfolio value: 104000 (no ETH holdings)
+      
+      const finalValue = timeline[timeline.length - 1].value;
+      expect(finalValue).toBeCloseTo(104000, 2);
+    });
+
+    it('should not change portfolio value when tax is negative (write-off)', () => {
+      const transactions = [
+        {
+          id: 'tx-1',
+          type: 'buy',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 2500,
+          timestamp: new Date(2024, 0, 1)
+        },
+        {
+          id: 'tx-2',
+          type: 'sell',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 2000, // Loss of 5000
+          timestamp: new Date(2024, 0, 2)
+        }
+      ];
+
+      const initialValue = 100000;
+      const taxRate = 0.20;
+      const priceHistory = {
+        ETH: [
+          { date: new Date(2024, 0, 1), price: 2500 },
+          { date: new Date(2024, 0, 2), price: 2000 }
+        ]
+      };
+
+      // Calculate portfolio value with transaction-based tax
+      const timeline = calculatePortfolioValueOverTime(
+        transactions,
+        initialValue,
+        priceHistory,
+        365,
+        taxRate,
+        'transaction'
+      );
+
+      // After buy: USD = 100000 - (10 * 2500) = 75000, ETH = 10
+      // After sell: USD = 75000 + (10 * 2000) = 95000, ETH = 0
+      // Tax on loss of -5000: -5000 * 0.20 = -1000 (write-off, no cash refund)
+      // Final USD: 95000 (tax write-off doesn't add money back)
+      // Portfolio value: 95000
+      
+      const finalValue = timeline[timeline.length - 1].value;
+      expect(finalValue).toBeCloseTo(95000, 2);
+    });
+
+    it('should deduct tax when gains exceed losses', () => {
+      const transactions = [
+        {
+          id: 'tx-1',
+          type: 'buy',
+          assetId: 'BTC',
+          quantity: 1.0,
+          price: 45000,
+          timestamp: new Date(2024, 0, 1)
+        },
+        {
+          id: 'tx-2',
+          type: 'sell',
+          assetId: 'BTC',
+          quantity: 1.0,
+          price: 50000, // Gain of 5000
+          timestamp: new Date(2024, 0, 2)
+        },
+        {
+          id: 'tx-3',
+          type: 'buy',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 2500,
+          timestamp: new Date(2024, 0, 3)
+        },
+        {
+          id: 'tx-4',
+          type: 'sell',
+          assetId: 'ETH',
+          quantity: 10.0,
+          price: 2400, // Loss of 1000
+          timestamp: new Date(2024, 0, 4)
+        }
+      ];
+
+      const initialValue = 100000;
+      const taxRate = 0.20;
+      const priceHistory = {
+        BTC: [
+          { date: new Date(2024, 0, 1), price: 45000 },
+          { date: new Date(2024, 0, 2), price: 50000 }
+        ],
+        ETH: [
+          { date: new Date(2024, 0, 3), price: 2500 },
+          { date: new Date(2024, 0, 4), price: 2400 }
+        ]
+      };
+
+      const timeline = calculatePortfolioValueOverTime(
+        transactions,
+        initialValue,
+        priceHistory,
+        365,
+        taxRate,
+        'transaction'
+      );
+
+      // Net gains: 5000 - 1000 = 4000
+      // Tax: 4000 * 0.20 = 800
+      // After all transactions: USD should be reduced by 800 tax
+      // Initial: 100000
+      // After BTC buy: 100000 - 45000 = 55000
+      // After BTC sell: 55000 + 50000 = 105000, tax on 5000 gain = 1000, USD = 104000
+      // After ETH buy: 104000 - 25000 = 79000
+      // After ETH sell: 79000 + 24000 = 103000, net gains now 4000, tax = 800
+      // Tax change from this transaction: 800 - 1000 = -200 (reduces tax)
+      // But we already paid 1000, so we get 200 back? No, we track net tax
+      // Actually: net gains after BTC = 5000, tax = 1000 (paid)
+      // After ETH: net gains = 4000, tax = 800 (total)
+      // Tax for ETH transaction = 800 - 1000 = -200 (reduces tax owed)
+      // But we already paid 1000, so we should get 200 back? No, tax write-offs don't refund
+      
+      // Let me recalculate:
+      // After BTC sell: gain 5000, net gains 5000, tax 1000, USD = 105000 - 1000 = 104000
+      // After ETH sell: loss 1000, net gains 4000, tax 800, tax change = 800 - 1000 = -200
+      // Since tax is negative (reduction), we don't add money back
+      // Final USD: 103000 (from ETH sell) - 0 (no additional tax) = 103000
+      // Wait, we already paid 1000, so we should have 104000 - 25000 + 24000 = 103000
+      // But we paid 1000 tax, so we should have 102000? No, the tax was already deducted
+      
+      // Let me think through this more carefully:
+      // 1. Buy BTC: USD = 55000, BTC = 1
+      // 2. Sell BTC: gain 5000, net gains 5000, tax 1000, USD = 55000 + 50000 - 1000 = 104000
+      // 3. Buy ETH: USD = 104000 - 25000 = 79000, ETH = 10
+      // 4. Sell ETH: loss 1000, net gains 4000, tax 800, tax change = -200
+      // Since tax change is negative, we don't refund, so USD = 79000 + 24000 = 103000
+      
+      const finalValue = timeline[timeline.length - 1].value;
+      // After all: USD = 103000 (no additional tax on the loss since it's a write-off)
+      expect(finalValue).toBeCloseTo(103000, 2);
     });
   });
 

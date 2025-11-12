@@ -174,7 +174,8 @@ export const calculatePortfolioTax = (transactions, initialValue, priceHistory, 
 
 // Calculate portfolio value over time
 // Includes monthly data points even when there are no trades
-export const calculatePortfolioValueOverTime = (transactions, initialValue, priceHistory, days = 365) => {
+// For transaction-based tax: deduct tax paid from portfolio value
+export const calculatePortfolioValueOverTime = (transactions, initialValue, priceHistory, days = 365, taxRate = 0.20, taxStrategy = 'transaction') => {
   const timeline = [];
   const holdings = {
     USD: initialValue,
@@ -182,6 +183,14 @@ export const calculatePortfolioValueOverTime = (transactions, initialValue, pric
     ETH: 0,
     DOGE: 0
   };
+  
+  // For transaction-based tax, track cost basis and net gains to calculate tax
+  const costBasisHoldings = {
+    BTC: [],
+    ETH: [],
+    DOGE: []
+  };
+  let netGains = 0;
   
   // Get all unique days from transactions
   const transactionDays = new Set([0]); // Include day 0 (initial state)
@@ -212,15 +221,65 @@ export const calculatePortfolioValueOverTime = (transactions, initialValue, pric
     holdings.ETH = 0;
     holdings.DOGE = 0;
     
+    // Reset tax tracking for transaction-based strategy
+    if (taxStrategy === 'transaction') {
+      costBasisHoldings.BTC = [];
+      costBasisHoldings.ETH = [];
+      costBasisHoldings.DOGE = [];
+      netGains = 0;
+    }
+    
     dayTransactions.forEach(tx => {
       if (tx.type === 'buy') {
         const cost = tx.quantity * tx.price;
         holdings.USD -= cost;
         holdings[tx.assetId] += tx.quantity;
+        
+        // Track cost basis for transaction-based tax
+        if (taxStrategy === 'transaction') {
+          costBasisHoldings[tx.assetId].push({
+            quantity: tx.quantity,
+            costBasis: tx.price
+          });
+        }
       } else if (tx.type === 'sell') {
         const revenue = tx.quantity * tx.price;
         holdings.USD += revenue;
         holdings[tx.assetId] -= tx.quantity;
+        
+        // Calculate tax for transaction-based strategy
+        if (taxStrategy === 'transaction') {
+          // Calculate gain/loss using FIFO
+          let remainingQty = tx.quantity;
+          let totalGain = 0;
+          
+          while (remainingQty > 0 && costBasisHoldings[tx.assetId].length > 0) {
+            const holding = costBasisHoldings[tx.assetId][0];
+            const qtyToSell = Math.min(remainingQty, holding.quantity);
+            const gain = (tx.price - holding.costBasis) * qtyToSell;
+            totalGain += gain;
+            remainingQty -= qtyToSell;
+            holding.quantity -= qtyToSell;
+            if (holding.quantity <= 0) {
+              costBasisHoldings[tx.assetId].shift();
+            }
+          }
+          
+          // Update net gains
+          netGains += totalGain;
+          
+          // Calculate tax on net gains
+          const previousNetGains = netGains - totalGain;
+          const previousNetTax = previousNetGains * taxRate;
+          const currentNetTax = netGains * taxRate;
+          const taxForThisTx = currentNetTax - previousNetTax;
+          
+          // Deduct tax from portfolio value only if tax is positive (tax paid)
+          // Negative tax (write-off) does not change portfolio value
+          if (taxForThisTx > 0) {
+            holdings.USD -= taxForThisTx;
+          }
+        }
       }
     });
     

@@ -141,6 +141,8 @@ For each transaction:
   - Apply tax rate to net gains (after losses are offset)
   - If net is negative (more losses than gains), tax is negative (tax write-off/credit)
   - Negative tax values are allowed and represent tax credits that can offset other taxes
+  - When tax is paid (positive tax), deduct tax amount from portfolio value (USD holdings)
+  - When tax is a write-off (negative tax), portfolio value does not change (no cash refund)
 ```
 
 #### Portfolio-Level Tax

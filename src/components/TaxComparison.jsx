@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const TaxComparison = ({ scenarioData }) => {
   if (!scenarioData) return null;
 
-  const { transactionTax, portfolioTax, portfolioTimeline, cumulativeTaxTimeline } = scenarioData;
+  const { transactionTax, portfolioTax, portfolioTimeline, portfolioTimelinePortfolioLevel, cumulativeTaxTimeline } = scenarioData;
 
   const comparisonData = [
     {
@@ -32,12 +32,20 @@ const TaxComparison = ({ scenarioData }) => {
   };
 
   // Combine portfolio value and tax timeline
+  // Match dates between transaction-based and portfolio-level timelines
   const combinedTimeline = portfolioTimeline.map((point, index) => {
     const transactionTaxPoint = cumulativeTaxTimeline[index];
     const portfolioTaxPoint = scenarioData.portfolioTaxTimeline?.[index];
+    
+    // Find matching portfolio-level point by date
+    const portfolioLevelPoint = portfolioTimelinePortfolioLevel?.find(
+      p => p.date.getTime() === point.date.getTime()
+    );
+    
     return {
       date: point.date,
-      portfolioValue: point.value,
+      portfolioValueTransaction: point.value, // Transaction-based (with tax deducted)
+      portfolioValuePortfolio: portfolioLevelPoint?.value || point.value, // Portfolio-level (without tax deducted)
       transactionTax: transactionTaxPoint?.tax || 0,
       portfolioTax: portfolioTaxPoint?.tax || 0
     };
@@ -57,26 +65,6 @@ const TaxComparison = ({ scenarioData }) => {
             <Bar dataKey="tax" fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="bg-red-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Transaction-Based</div>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(transactionTax.totalTax)}
-            </div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Portfolio-Level</div>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(portfolioTax.totalTax)}
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
-          <div className="text-sm text-gray-600">Tax Difference</div>
-          <div className="text-xl font-bold text-yellow-700">
-            {formatCurrency(Math.abs(transactionTax.totalTax - portfolioTax.totalTax))}
-          </div>
-        </div>
       </div>
 
       {/* Portfolio Value Over Time */}
@@ -97,10 +85,18 @@ const TaxComparison = ({ scenarioData }) => {
             <Legend />
             <Line 
               type="monotone" 
-              dataKey="portfolioValue" 
-              stroke="#10b981" 
+              dataKey="portfolioValueTransaction" 
+              stroke="#ef4444" 
               strokeWidth={2}
-              name="Portfolio Value"
+              name="Transaction-Based Portfolio Value"
+              dot={false}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="portfolioValuePortfolio" 
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              name="Portfolio-Level Portfolio Value"
               dot={false}
             />
           </LineChart>
