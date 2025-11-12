@@ -6,8 +6,8 @@ import ScenarioView from './ScenarioView';
 const Dashboard = () => {
   const [config, setConfig] = useState({
     initialValue: 100000,
-    days: 365,
-    taxRate: 0.20
+    days: 1095,
+    taxRate: 0.39
   });
   
   const [simulationData, setSimulationData] = useState(null);

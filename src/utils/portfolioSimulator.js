@@ -4,8 +4,8 @@ import { calculateTransactionTax, calculatePortfolioTax, calculatePortfolioValue
 export const simulatePortfolio = (config) => {
   const {
     initialValue = 100000,
-    days = 365,
-    taxRate = 0.20
+    days = 1095,
+    taxRate = 0.39
   } = config;
   
   // Initialize assets and price history

@@ -175,7 +175,7 @@ export const calculatePortfolioTax = (transactions, initialValue, priceHistory, 
 // Calculate portfolio value over time
 // Includes monthly data points even when there are no trades
 // For transaction-based tax: deduct tax paid from portfolio value
-export const calculatePortfolioValueOverTime = (transactions, initialValue, priceHistory, days = 365, taxRate = 0.20, taxStrategy = 'transaction') => {
+export const calculatePortfolioValueOverTime = (transactions, initialValue, priceHistory, days = 1095, taxRate = 0.20, taxStrategy = 'transaction') => {
   const timeline = [];
   const holdings = {
     USD: initialValue,

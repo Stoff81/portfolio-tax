@@ -106,9 +106,10 @@ export const generateTransactions = (scenario, assets, initialValue, days, price
       const trend = getPriceTrend(assetId, day);
       
       // Bad trader: Buys when price is going down, sells when price is going up
+      // Uses larger trade sizes to make losses more visible
       if (trend === 'down' && portfolio.USD > price * 100) {
-        // Buy when price is about to drop (bad timing)
-        const quantity = (portfolio.USD / price) * (0.1 + Math.random() * 0.1);
+        // Buy when price is about to drop (bad timing) - use 30-50% of USD
+        const quantity = (portfolio.USD / price) * (0.30 + Math.random() * 0.20);
         const cost = quantity * price;
         portfolio.USD -= cost;
         portfolio[assetId] += quantity;
@@ -123,8 +124,8 @@ export const generateTransactions = (scenario, assets, initialValue, days, price
           scenario: 'bad'
         });
       } else if (trend === 'up' && portfolio[assetId] > 0) {
-        // Sell when price is about to rise (bad timing)
-        const quantity = portfolio[assetId] * (0.15 + Math.random() * 0.15);
+        // Sell when price is about to rise (bad timing) - use 40-60% of holdings
+        const quantity = portfolio[assetId] * (0.40 + Math.random() * 0.20);
         const revenue = quantity * price;
         portfolio.USD += revenue;
         portfolio[assetId] -= quantity;
@@ -193,9 +194,10 @@ export const generateTransactions = (scenario, assets, initialValue, days, price
       const trend = getPriceTrend(assetId, day);
       
       // Good trader: Buys when price is going up, sells when price is going down
+      // Uses larger trade sizes to make gains more visible
       if (trend === 'up' && portfolio.USD > price * 100) {
-        // Buy when price is about to rise (good timing)
-        const quantity = (portfolio.USD / price) * (0.1 + Math.random() * 0.1);
+        // Buy when price is about to rise (good timing) - use 25-40% of USD
+        const quantity = (portfolio.USD / price) * (0.25 + Math.random() * 0.15);
         const cost = quantity * price;
         portfolio.USD -= cost;
         portfolio[assetId] += quantity;
@@ -210,8 +212,8 @@ export const generateTransactions = (scenario, assets, initialValue, days, price
           scenario: 'good'
         });
       } else if (trend === 'down' && portfolio[assetId] > 0) {
-        // Sell when price is about to drop (good timing)
-        const quantity = portfolio[assetId] * (0.15 + Math.random() * 0.15);
+        // Sell when price is about to drop (good timing) - use 35-50% of holdings
+        const quantity = portfolio[assetId] * (0.35 + Math.random() * 0.15);
         const revenue = quantity * price;
         portfolio.USD += revenue;
         portfolio[assetId] -= quantity;
@@ -282,7 +284,7 @@ export const generateTransactions = (scenario, assets, initialValue, days, price
 };
 
 // Initialize assets with price history
-export const initializeAssets = (days = 365) => {
+export const initializeAssets = (days = 1095) => {
   const assets = {
     BTC: {
       id: 'BTC',
